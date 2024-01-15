@@ -2,13 +2,15 @@ import React from "react";
 import Header from "./Header";
 import { useState, useRef } from "react";
 import checkValidData from "../utils/validate";
-import createUser from "../utils/createUser";
-import signInUser from "../utils/signInUser";
-import { useNavigate } from "react-router-dom";
-import { updateProfile } from "firebase/auth";
+import {
+  updateProfile,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import { auth } from "../utils/firebase";
 import { useDispatch } from "react-redux";
 import { addUser } from "../utils/userSlice";
+import { BG_IMAGE, User_AVTAR } from "../utils/constant";
 
 const Login = () => {
   const [isSignInForm, setSignInForm] = useState(true);
@@ -16,54 +18,59 @@ const Login = () => {
   const password = useRef(null);
   const email = useRef(null);
   const name = useRef(null);
-  const navigate = useNavigate();
+
   const dispatch = useDispatch();
 
   const toggleSignInForm = () => {
     setSignInForm(!isSignInForm);
   };
-  async function handleSubmit() {
+  function handleSubmit() {
     const message = checkValidData(password.current.value);
     setErrorMessage(message);
     if (message) return;
     if (!isSignInForm) {
       //sign up logic
-      const data = await createUser(
+      createUserWithEmailAndPassword(
+        auth,
         email.current.value,
         password.current.value
-      );
-      updateProfile(auth.currentUser, {
-        displayName: name.current.value,
-        photoURL:
-          "https://media.licdn.com/dms/image/D4D35AQEZkfxpv4dcAg/profile-framedphoto-shrink_400_400/0/1688286928350?e=1705867200&v=beta&t=cb3nuj43D-mYCkw390lK0eKKZBC6XdAnAsn6ewii160",
-      })
-        .then(() => {
-          // Profile updated!
+      )
+        .then((userCredential) => {
+          // Signed up
+          const user = userCredential.user;
+          updateProfile(user, {
+            displayName: name.current.value,
+            photoURL: User_AVTAR,
+          })
+            .then(() => {
+              // Profile updated!
+              // ...
+              const { uid, email, displayName, photoURL } = auth.currentUser;
+              dispatch(addUser({ uid, email, displayName, photoURL }));
+            })
+            .catch((error) => {
+              // An error occurred
+              setErrorMessage(error.message);
+              // ...
+            });
           // ...
-          const { uid, email, displayName, photoURL } = auth.currentUser;
-          dispatch(addUser({ uid, email, displayName, photoURL }));
-          navigate("/browse");
         })
         .catch((error) => {
-          // An error occurred
           setErrorMessage(error.message);
-          // ...
+          // ..
         });
-      if (data.message === "error") {
-        console.log("data " + data);
-        setErrorMessage(data.errorCode);
-      }
-      navigate("/browse");
     } else {
-      const data = await signInUser(
+      signInWithEmailAndPassword(
+        auth,
         email.current.value,
         password.current.value
-      );
-
-      if (data.message === "success") {
-        navigate("/browse");
-      }
-      setErrorMessage(data.errorCode);
+      )
+        .then((userCredential) => {
+          // ...
+        })
+        .catch((error) => {
+          setErrorMessage(error.message);
+        });
     }
   }
 
@@ -71,10 +78,7 @@ const Login = () => {
     <div>
       <Header />
       <div className="absolute ">
-        <img
-          alt="bg-img"
-          src="https://assets.nflxext.com/ffe/siteui/vlv3/fc164b4b-f085-44ee-bb7f-ec7df8539eff/d23a1608-7d90-4da1-93d6-bae2fe60a69b/IN-en-20230814-popsignuptwoweeks-perspective_alpha_website_large.jpg"
-        />
+        <img alt="bg-img" src={BG_IMAGE} />
       </div>
       <form
         onSubmit={(e) => e.preventDefault()}
@@ -100,7 +104,7 @@ const Login = () => {
         <input
           ref={password}
           type="password"
-          required="true"
+          required={true}
           placeholder="password"
           className="p-4 my-2 w-full  bg-gray-700 rounded-lg "
         />
