@@ -78,11 +78,15 @@ const Login = () => {
     <div>
       <Header />
       <div className="absolute ">
-        <img alt="bg-img" src={BG_IMAGE} />
+        <img
+          className="h-screen object-cover w-screen"
+          alt="bg-img"
+          src={BG_IMAGE}
+        />
       </div>
       <form
         onSubmit={(e) => e.preventDefault()}
-        className=" w-3/12 absolute p-12 bg-black my-36 mx-auto right-0 left-0 text-white bg-opacity-80 "
+        className=" w-9/12 md:w-3/12 absolute p-12 bg-black my-36 mx-auto right-0 left-0 mt-[50%] md:mt-[10%] text-white bg-opacity-80 "
       >
         <h1 className="font-bold text-3xl py-4">
           {isSignInForm ? "Sign In" : "Sign Up"}
@@ -99,6 +103,7 @@ const Login = () => {
           ref={email}
           type="email"
           placeholder="email Address"
+          required={true}
           className="p-4 my-2 w-full bg-gray-700 rounded-lg"
         />
         <input

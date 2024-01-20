@@ -1,15 +1,20 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import { auth } from "../utils/firebase";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addUser, removeUser } from "../utils/userSlice";
 import { LOGO_URL } from "../utils/constant";
+import { toggleGptSearchView } from "../utils/gptSlice";
+import { SUPPORTED_LANGUAGES } from "../utils/constant";
+import { changeLanguage } from "../utils/configSlice";
 
 const Header = () => {
   const navigate = useNavigate();
   const user = useSelector((store) => store.user);
+  const showGptSearch = useSelector((store) => store.gpt.showGptSearch);
   const dispatch = useDispatch();
+  const language = useRef(null);
   const handleSignOut = () => {
     signOut(auth)
       .then(() => {
@@ -38,16 +43,45 @@ const Header = () => {
     });
     return () => unsubscribe();
   }, []);
+
+  const handleGptSearchClick = () => {
+    dispatch(toggleGptSearchView());
+  };
+  const handleLanguageChange = (event) => {
+    console.log(language);
+    dispatch(changeLanguage(language.current.value));
+  };
+
   return (
-    <div className=" flex  justify-between w-screen absolute px-8 py-2 bg-gradient-to-b from-black z-10">
-      <img className="w-44" alt="logo" src={LOGO_URL} />
+    <div className=" flex  flex-col justify-between w-screen absolute px-8 py-2 bg-gradient-to-b from-black z-10 bg-black  md:mx-auto md:flex-row ">
+      <img className="w-44 mx-auto md:mx-0" alt="logo" src={LOGO_URL} />
       {user && (
-        <div className="flex p-2 m-2 rounded-sm  ">
-          <img src={user.photoURL} alt="userImg" />
+        <div className="flex p-2 m-2 ">
+          {showGptSearch && (
+            <select
+              ref={language}
+              onChange={handleLanguageChange}
+              className="p-2 m-2 bg-gray-900 text-white"
+            >
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <option key={lang.identifier} value={lang.identifier}>
+                  {lang.name}
+                </option>
+              ))}
+            </select>
+          )}
           <button
-            className="font-bold text-white p-2 m-2"
-            onClick={handleSignOut}
+            className="py-2 px-5 my-2 rounded-lg bg-teal-600 text-white"
+            onClick={handleGptSearchClick}
           >
+            GPT Search
+          </button>
+          <img
+            className=" mx-2 my-4 rounded-lg px-2"
+            src={user.photoURL}
+            alt="userImg"
+          />
+          <button className="font-bold text-white pl-1" onClick={handleSignOut}>
             Sign Out
           </button>
         </div>
