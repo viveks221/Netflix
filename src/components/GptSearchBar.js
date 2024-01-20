@@ -11,11 +11,10 @@ const GptSearchBar = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const searchText = useRef(null);
-  const dummyMovie = "Gadar, Sholay, Don, Golmaal, Koi Mil Gaya".split(",");
-  console.log(dummyMovie);
+  // const dummyMovie = "Gadar, Sholay, Don, Golmaal, Koi Mil Gaya".split(",");
+  // console.log(dummyMovie);
 
   const searchMovieTmdb = async (movie) => {
-    console.log(movie);
     const data = await fetch(
       "https://api.themoviedb.org/3/search/movie?query=" +
         movie +
@@ -28,21 +27,26 @@ const GptSearchBar = () => {
 
   const handleGptSearchClick = async () => {
     try {
-      //   const gptQuery =
-      //     "Act as a Movie Recommendation system and suggest some movies for the query : " +
-      //     searchText.current.value +
-      //     ". only give me names of 5 movies, comma seperated like the example result given ahead. Example Result: Gadar, Sholay, Don, Golmaal, Koi Mil Gaya";
-      //   const gptResults = await openai.chat.completions.create({
-      //     messages: [{ role: "user", content: gptQuery }],
-      //     model: "gpt-3.5-turbo",
-      //   });
-      const promiseArray = dummyMovie.map((movie) => searchMovieTmdb(movie));
+      const gptQuery =
+        "Act as a Movie Recommendation system and suggest some movies for the query : " +
+        searchText.current.value +
+        ". only give me names of 5 movies, comma seperated like the example result given ahead. Example Result: Gadar, Sholay, Don, Golmaal, Koi Mil Gaya";
+      const gptResults = await openai.chat.completions.create({
+        messages: [{ role: "user", content: gptQuery }],
+        model: "gpt-3.5-turbo",
+      });
+      const gptResultsArr =
+        gptResults?.choices?.[0]?.message.content.split(",");
+      const promiseArray = gptResultsArr.map((movie) => searchMovieTmdb(movie));
       const tmdbResults = await Promise.all(promiseArray);
       dispatch(
-        addGptMovieResult({ movieNames: dummyMovie, movieResults: tmdbResults })
+        addGptMovieResult({
+          movieNames: gptResultsArr,
+          movieResults: tmdbResults,
+        })
       );
     } catch (e) {
-      navigate("/browse");
+      throw e;
     }
   };
 
